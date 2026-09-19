@@ -1,10 +1,26 @@
 [build-system]
 requires = ["hatchling"]
+
 [project]
 name = "beckn-sdk"
-version = "1.0.0"
-description = "BeckN Protocol SDK for Python"
+version = "1.0.1"
+description = "BeckN Protocol SDK for Python — unified agentic discovery and commerce protocol API"
+readme = "README.md"
+license = "Apache-2.0"
 requires-python = ">=3.10"
+authors = [
+    { name = "BeckN Network", email = "dev@beckn.network" },
+]
+keywords = ["beckn", "protocol", "sdk", "commerce", "interop", "a2a", "mcp", "anp", "acp"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = ["httpx>=0.27.0"]
 
 [project.optional-dependencies]
