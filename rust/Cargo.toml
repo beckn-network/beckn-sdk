@@ -1,8 +1,10 @@
 [package]
 name = "beckn-sdk"
-version = "1.0.0"
+version = "1.0.2"
 edition = "2021"
-description = "BeckN Protocol SDK for Rust"
+description = "BeckN Protocol SDK for Rust — unified agentic discovery and commerce protocol API"
+license = "Apache-2.0"
+repository = "https://github.com/beckn-network/beckn-sdk"
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }

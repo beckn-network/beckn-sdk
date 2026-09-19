@@ -1,7 +1,7 @@
 {
   "name": "@beckn-network/sdk",
-  "version": "1.0.1",
-  "description": "BeckN Protocol SDK for TypeScript/JavaScript",
+  "version": "1.0.2",
+  "description": "BeckN Protocol SDK for TypeScript/JavaScript — unified agentic discovery and commerce protocol API",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "exports": {
@@ -31,11 +31,20 @@
     "protocol",
     "sdk",
     "commerce",
-    "interop"
+    "interop",
+    "a2a",
+    "mcp",
+    "anp",
+    "acp"
   ],
-  "license": "MIT",
-  "directories": {
-    "test": "tests"
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/beckn-network/beckn-sdk.git"
   },
-  "author": ""
+  "bugs": {
+    "url": "https://github.com/beckn-network/beckn-sdk/issues"
+  },
+  "homepage": "https://github.com/beckn-network/beckn-sdk#readme",
+  "author": "BeckN Network <dev@beckn.network>"
 }

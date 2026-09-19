@@ -4,11 +4,11 @@ Multi-language SDKs for the BeckN Protocol — a unified agentic discovery and c
 
 ## Supported Languages
 
-| Language | Package | Registry | Status |
-|----------|---------|----------|--------|
-| TypeScript/Node.js | `@beckn-network/sdk` | npm | ✅ Available |
-| Python | `beckn-sdk` | PyPI | ✅ Available |
-| Rust | `beckn-sdk` | crates.io | ⏳ Coming soon |
+| Language | Package | Registry | Version | Status |
+|----------|---------|----------|---------|--------|
+| TypeScript/Node.js | `@beckn-network/sdk` | npm | 1.0.1 | ✅ Available |
+| Python | `beckn-sdk` | PyPI | 1.0.2 | ✅ Available |
+| Rust | `beckn-sdk` | crates.io | ⏳ | ⏳ Coming soon |
 
 ## Installation
 
@@ -26,7 +26,7 @@ pip install beckn-sdk
 ```toml
 # Cargo.toml
 [dependencies]
-beckn-sdk = "1.0.0"
+beckn-sdk = "1.0.2"
 ```
 
 ## Quick Start
