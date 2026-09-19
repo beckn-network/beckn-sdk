@@ -5,13 +5,13 @@ A TypeScript/JavaScript SDK for the BeckN Protocol — a unified agentic discove
 ## Installation
 
 ```bash
-npm install @beckn/sdk
+npm install @beckn-network/sdk
 ```
 
 ## Quick Start
 
 ```typescript
-import { BeckNClient } from '@beckn/sdk';
+import { BeckNClient } from '@beckn-network/sdk';
 
 const client = new BeckNClient({
   apiKey: 'bk_your_api_key_here',
@@ -168,7 +168,7 @@ new BeckNClient({
 ## Error Handling
 
 ```typescript
-import { BeckNError } from '@beckn/sdk';
+import { BeckNError } from '@beckn-network/sdk';
 
 try {
   const order = await client.getOrder('nonexistent');

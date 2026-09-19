@@ -142,7 +142,7 @@ GET /api/geodns/bpps?company_id=company-uuid&country=US
 ### 3.1 SDK Quick Start (TypeScript Example)
 
 ```typescript
-import { BeckNClient } from '@beckn/sdk';
+import { BeckNClient } from '@beckn-network/sdk';
 
 const client = new BeckNClient({
   baseUrl: 'https://api.beckn.network/v1',

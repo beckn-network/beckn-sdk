@@ -12,7 +12,7 @@ BeckN serves as a unified agentic system — when GBP locations are synced, they
 
 | Language | Package | Status |
 |----------|---------|--------|
-| TypeScript/Node.js | `@beckn/sdk` | ✅ Available |
+| TypeScript/Node.js | `@beckn-network/sdk` | ✅ Available |
 | Python | `beckn-sdk` | ✅ Available |
 | Rust | `beckn-sdk` | ✅ Available |
 
@@ -20,7 +20,7 @@ BeckN serves as a unified agentic system — when GBP locations are synced, they
 
 ### TypeScript
 ```bash
-npm install @beckn/sdk
+npm install @beckn-network/sdk
 ```
 
 ### Python
@@ -37,7 +37,7 @@ beckn-sdk = "1.0.0"
 ## Quick Start
 
 ```typescript
-import { BeckNClient } from '@beckn/sdk';
+import { BeckNClient } from '@beckn-network/sdk';
 
 const client = new BeckNClient({
   baseUrl: 'https://api.beckn.network/v1',
