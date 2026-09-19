@@ -40,7 +40,7 @@ let nearby = client.discover_marketplace(40.7128, -74.0060, 50, 10).await?;
 let agent = client.register_agent_card(&AgentCardRegister {
     agent_id: "agent-001".to_string(),
     name: "Travel Booking Agent".to_string(),
-    url: "https://travel.example.com".to_string(),
+    url: "https://travel.beckn.network".to_string(),
     ..Default::default()
 }).await?;
 ```

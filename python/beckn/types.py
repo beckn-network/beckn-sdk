@@ -646,6 +646,6 @@ class AnpVerificationVerify:
 
 @dataclass
 class BeckNClientConfig:
-    base_url: str = "http://localhost:4000/v1"
+    base_url: str = "https://api.beckn.network/v1"
     api_key: Optional[str] = None
     timeout: int = 30000

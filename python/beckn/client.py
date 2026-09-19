@@ -57,7 +57,7 @@ class BeckNClient:
     def __init__(self, config: Optional[BeckNClientConfig] = None):
         if config is None:
             config = BeckNClientConfig()
-        self.base_url = config.base_url or os.environ.get('BECKN_API_URL', 'http://localhost:4000/v1')
+        self.base_url = config.base_url or os.environ.get('BECKN_API_URL', 'https://api.beckn.network/v1')
         self.api_key = config.api_key or os.environ.get('BECKN_API_KEY')
         self.timeout = config.timeout or 30
         self._client = httpx.Client(timeout=self.timeout, base_url=self.base_url)

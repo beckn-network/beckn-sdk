@@ -47,7 +47,7 @@ const bpps = await client.findNearbyBpps({ lat: 40.7128, lng: -74.0060, radiusKm
 const agent = await client.registerAgentCard({
   agent_id: 'agent-001',
   name: 'Travel Booking Agent',
-  url: 'https://travel.example.com',
+  url: 'https://travel.beckn.network',
   capabilities: { streaming: true },
   skills: [{ id: 'search', name: 'Travel Search' }],
 });

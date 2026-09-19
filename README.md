@@ -69,7 +69,7 @@ health = client.health_check()
 bap = client.create_bap({
     "id": "my-bap-001",
     "name": "My Store App",
-    "endpoint": "https://store.example.com",
+    "endpoint": "https://store.beckn.network",
     "country": "US",
     "lat": 40.7128,
     "lon": -74.0060,

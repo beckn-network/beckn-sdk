@@ -39,7 +39,7 @@ nearby = client.discover_marketplace(lat=40.7128, lng=-74.0060, radius_km=50)
 agent = client.register_agent_card({
     "agent_id": "agent-001",
     "name": "Travel Booking Agent",
-    "url": "https://travel.example.com",
+    "url": "https://travel.beckn.network",
     "capabilities": {"streaming": True},
 })
 ```
@@ -61,7 +61,7 @@ bpp = client.create_bpp({"id": "my-bpp-001", "name": "My Provider", "country": "
 item = client.create_item({"id": "item-001", "name": "Product", "price": 99})
 
 # Companies (B2B Multi-Tenant)
-company = client.create_company({"name": "Acme Corp", "domain": "acme.example.com"})
+company = client.create_company({"name": "Acme Corp", "domain": "acme.beckn"})
 
 # API Keys
 key = client.create_api_key({"name": "my-api-key"})
@@ -86,7 +86,7 @@ nearby = client.discover_marketplace(lat=40.7128, lng=-74.0060, radius_km=50, li
 agent = client.register_agent_card({
     "agent_id": "agent-001",
     "name": "Travel Booking Agent",
-    "url": "https://travel.example.com",
+    "url": "https://travel.beckn.network",
     "capabilities": {"streaming": True},
     "skills": [{"id": "search", "name": "Travel Search"}],
 })
@@ -138,14 +138,14 @@ client_obj = client.register_client({
 announcement = client.announce({
     "announcement_id": "ann-001",
     "did": "did:example:123",
-    "service_endpoint": "https://agent.example.com",
+    "service_endpoint": "https://agent.beckn.network",
 })
 
 # Register a witness
 witness = client.register_witness({
     "witness_id": "witness-001",
     "did": "did:example:witness-1",
-    "endpoint": "https://witness.example.com",
+    "endpoint": "https://witness.beckn.network",
 })
 
 # Verify a DID document
@@ -162,9 +162,9 @@ verification = client.verify({
 issuer = client.register_issuer({
     "issuer_id": "issuer-001",
     "name": "Test Issuer",
-    "authorization_endpoint": "https://issuer.example.com/authorize",
-    "token_endpoint": "https://issuer.example.com/token",
-    "jwks_uri": "https://issuer.example.com/.well-known/jwks.json",
+    "authorization_endpoint": "https://issuer.beckn.network/authorize",
+    "token_endpoint": "https://issuer.beckn.network/token",
+    "jwks_uri": "https://issuer.beckn.network/.well-known/jwks.json",
 })
 
 # Issue a token
@@ -186,7 +186,7 @@ presentation = client.submit_presentation({
 ```python
 # Register a GBP account
 account = client.create_gbp_account({
-    "email": "merchant@example.com",
+    "email": "merchant@beckn.network",
     "account_name": "accounts/1234567890",
 })
 

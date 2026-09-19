@@ -24,7 +24,7 @@ export class BeckNError extends Error {
   }
 }
 
-const DEFAULT_BASE_URL = process.env.BECKN_API_URL || 'http://localhost:4000/v1';
+const DEFAULT_BASE_URL = process.env.BECKN_API_URL || 'https://api.beckn.network/v1';
 const DEFAULT_TIMEOUT = 30000;
 
 export class BeckNClient {

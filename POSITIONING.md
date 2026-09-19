@@ -152,7 +152,7 @@ const client = new BeckNClient({
 // 1. Register a company for multi-tenant isolation
 const company = await client.createCompany({
   name: 'Acme Corp',
-  domain: 'acme.example.com',
+  domain: 'acme.beckn',
   country: 'US',
 });
 
@@ -173,7 +173,7 @@ const bpps = await client.discoverMarketplace(40.7128, -74.0060, 50, 10);
 await client.registerAgentCard({
   agent_id: 'agent-001',
   name: 'Travel Booking Agent',
-  url: 'https://travel.example.com',
+  url: 'https://travel.beckn.network',
   skills: [{ id: 'search', name: 'Travel Search' }],
 });
 

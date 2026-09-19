@@ -596,7 +596,7 @@ pub struct ClientConfig {
 impl Default for ClientConfig {
     fn default() -> Self {
         Self {
-            base_url: "http://localhost:4000/v1".to_string(),
+            base_url: "https://api.beckn.network/v1".to_string(),
             api_key: std::env::var("BECKN_API_KEY").ok(),
             timeout_seconds: 30,
         }
