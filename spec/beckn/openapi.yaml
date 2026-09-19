@@ -1,0 +1,145 @@
+openapi: 3.1.1
+info:
+  title: BeckN Protocol API
+  description: BeckN Protocol API — orders, items, providers, BAPs, BPPs, subscriptions, and API keys.
+  version: 2.0.0
+  license:
+    name: Apache-2.0
+
+servers:
+  - url: https://api.beckn.network/v1
+
+components:
+  schemas:
+    Order:
+      type: object
+      required: [id, order_state]
+      properties:
+        id: { type: string }
+        order_state: { type: string, enum: [pending, accepted, in_fulfillment, completed, cancelled] }
+        provider_id: { type: string }
+        bpp_id: { type: string }
+        bap_id: { type: string }
+        transaction_id: { type: string }
+        billing: { type: object }
+        fulfillments:
+          type: array
+          items: { type: object }
+        quote: { type: object }
+        payment: { type: object }
+        items:
+          type: array
+          items: { type: object }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    Item:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        provider_id: { type: string }
+        descriptor: { type: object }
+        price: { type: object }
+        category_id: { type: string }
+        location_id: { type: string }
+
+    Provider:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string }
+        descriptor: { type: object }
+        locations: { type: array, items: { type: object }, default: [] }
+        categories: { type: array, items: { type: object }, default: [] }
+        items: { type: array, items: { type: object }, default: [] }
+
+    Bap:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        did: { type: string }
+        endpoint: { type: string, format: uri }
+        public_key: { type: string }
+        active: { type: boolean, default: true }
+        capabilities: { type: array, items: { type: string } }
+
+    Bpp:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        did: { type: string }
+        endpoint: { type: string, format: uri }
+        public_key: { type: string }
+        active: { type: boolean, default: true }
+        capabilities: { type: array, items: { type: string } }
+        country: { type: string }
+        city: { type: string }
+        symbol: { type: string }
+        currency: { type: string }
+
+    Subscription:
+      type: object
+      required: [id, subscriber_id, subscriber_type]
+      properties:
+        id: { type: string }
+        subscriber_id: { type: string }
+        subscriber_type: { type: string, enum: [bap, bpp] }
+        plan_id: { type: string }
+        status: { type: string, enum: [trialing, active, past_due, canceled, unpaid] }
+        cancel_at_period_end: { type: boolean, default: false }
+
+    ApiKey:
+      type: object
+      properties:
+        id: { type: string }
+        description: { type: string }
+        owner: { type: string }
+        scopes: { type: array, items: { type: string } }
+        active: { type: boolean, default: true }
+        expires_at: { type: string, format: date-time, nullable: true }
+
+    ApiKeyResponse:
+      allOf:
+        - $ref: '#/components/schemas/ApiKey'
+      properties:
+        secret: { type: string, description: "Raw key (only on creation)" }
+
+    ErrorResponse:
+      type: object
+      properties:
+        error: { type: string }
+        message: { type: string }
+
+paths:
+  /orders:
+    get: { summary: List orders, operationId: listOrders, responses: { '200': { description: Orders, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Order' } } } } } } }
+    post: { summary: Create order, operationId: createOrder, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }, responses: { '200': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } } } }
+  /orders/{id}:
+    get: { summary: Get order, operationId: getOrder, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { '200': { description: Order, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } } } }
+    patch: { summary: Update order, operationId: updateOrder, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } }, responses: { '200': { description: Updated, content: { application/json: { schema: { $ref: '#/components/schemas/Order' } } } } } }
+    delete: { summary: Delete order, operationId: deleteOrder, parameters: [{ name: id, in: path, required: true, schema: { type: string } }], responses: { '204': { description: Deleted } } }
+  /items:
+    get: { summary: List items, operationId: listItems, responses: { '200': { description: Items, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Item' } } } } } } }
+    post: { summary: Create item, operationId: createItem, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Item' } } } }, responses: { '200': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Item' } } } } } }
+  /baps:
+    get: { summary: List BAPs, operationId: listBaps, responses: { '200': { description: BAPs, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Bap' } } } } } }
+    post: { summary: Register BAP, operationId: registerBap, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Bap' } } } }, responses: { '200': { description: Registered, content: { application/json: { schema: { $ref: '#/components/schemas/Bap' } } } } } }
+  /bpps:
+    get: { summary: List BPPs, operationId: listBpps, responses: { '200': { description: BPPs, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Bpp' } } } } } }
+    post: { summary: Register BPP, operationId: registerBpp, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Bpp' } } } }, responses: { '200': { description: Registered, content: { application/json: { schema: { $ref: '#/components/schemas/Bpp' } } } } } }
+  /providers:
+    get: { summary: List providers, operationId: listProviders, responses: { '200': { description: Providers, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Provider' } } } } } }
+    post: { summary: Create provider, operationId: createProvider, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Provider' } } } }, responses: { '200': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Provider' } } } } } }
+  /fulfillments:
+    get: { summary: List fulfillments, operationId: listFulfillments, responses: { '200': { description: Fulfillments, content: { application/json: { schema: { type: array, items: { type: object } } } } } }
+    post: { summary: Create fulfillment, operationId: createFulfillment, requestBody: { required: true, content: { application/json: { schema: { type: object } } } }, responses: { '200': { description: Created, content: { application/json: { schema: { type: object } } } } } }
+  /subscriptions:
+    get: { summary: List subscriptions, operationId: listSubscriptions, responses: { '200': { description: Subscriptions, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/Subscription' } } } } } }
+    post: { summary: Create subscription, operationId: createSubscription, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } } }, responses: { '200': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/Subscription' } } } } } }
+  /api-keys:
+    get: { summary: List API keys, operationId: listApiKeys, responses: { '200': { description: Keys, content: { application/json: { schema: { type: array, items: { $ref: '#/components/schemas/ApiKey' } } } } } }
+    post: { summary: Create API key, operationId: createApiKey, requestBody: { required: true, content: { application/json: { schema: { $ref: '#/components/schemas/ApiKey' } } } }, responses: { '200': { description: Created, content: { application/json: { schema: { $ref: '#/components/schemas/ApiKeyResponse' } } } } } }

@@ -1,0 +1,2789 @@
+openapi: 3.1.1
+info:
+  title: BeckN Protocol API
+  description: |
+    BeckN Protocol API v2.0.0 — SDK for integrating with BeckN-powered platforms.
+
+    BeckN is an Elixir/Ash implementation of the Beckn protocol, an open standard
+    for domain-agnostic digital commerce. This SDK enables customers to interact
+    with BeckN networks from Python, TypeScript/Node.js, and Rust.
+
+    Every request must carry an API key in the Authorization header:
+    `Authorization: Bearer bk_<secret>`.
+
+  version: 2.0.0
+  contact:
+    name: BeckN Protocol
+    url: https://github.com/beckn/protocol-specifications
+  license:
+    name: Apache-2.0
+    url: https://www.apache.org/licenses/LICENSE-2.0
+
+servers:
+  - url: https://api.beckn.network
+    description: Production BeckN network
+  - url: https://sandbox.beckn.network
+    description: Sandbox BeckN network
+  - url: http://localhost:4000
+    description: Local development
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: bk_
+
+  schemas:
+    Context:
+      type: object
+      description: Beckn protocol context object
+      required:
+        - action
+        - version
+        - transactionId
+        - messageId
+        - bapId
+        - bapUri
+        - timestamp
+      properties:
+        action:
+          type: string
+          description: The Beckn action name (e.g., search, select, init, confirm)
+        version:
+          type: string
+          example: "2.0.0"
+        transactionId:
+          type: string
+          format: uuid
+        messageId:
+          type: string
+          format: uuid
+        bapId:
+          type: string
+        bapUri:
+          type: string
+          format: uri
+        bppId:
+          type: string
+          nullable: true
+        bppUri:
+          type: string
+          format: uri
+          nullable: true
+        city:
+          type: object
+          properties:
+            name:
+              type: string
+              example: "std:080"
+        country:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "IND"
+        domain:
+          type: string
+          example: "local-retail"
+        timestamp:
+          type: string
+          format: date-time
+        expiry:
+          type: string
+          format: date-time
+        ttl:
+          type: string
+          example: "PT10M"
+
+    Envelope:
+      type: object
+      description: Standard Beckn transport envelope
+      required:
+        - context
+        - message
+      properties:
+        context:
+          $ref: '#/components/schemas/Context'
+        message:
+          type: object
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    Order:
+      type: object
+      description: A Beckn order — the central commerce document
+      required:
+        - id
+        - order_state
+      properties:
+        id:
+          type: string
+        order_state:
+          type: string
+          enum: [pending, accepted, in_fulfillment, completed, cancelled]
+          default: pending
+        provider_id:
+          type: string
+        bpp_id:
+          type: string
+        bap_id:
+          type: string
+        transaction_id:
+          type: string
+        billing:
+          type: object
+        fulfillments:
+          type: array
+          items:
+            type: object
+        quote:
+          type: object
+        payment:
+          type: object
+        items:
+          type: array
+          items:
+            type: object
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Item:
+      type: object
+      description: A catalog item — a product or service
+      required:
+        - provider_id
+      properties:
+        id:
+          type: string
+          format: uuid
+        provider_id:
+          type: string
+        descriptor:
+          type: object
+          properties:
+            name:
+              type: string
+            images:
+              type: array
+              items:
+                type: string
+          description: Descriptor with "name", "images", etc.
+        price:
+          type: object
+          properties:
+            currency:
+              type: string
+            value:
+              type: number
+          description: Price map with "currency" and "value"
+        category_id:
+          type: string
+        location_id:
+          type: string
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Provider:
+      type: object
+      description: A Beckn provider (BPP) — a seller or service provider
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        descriptor:
+          type: object
+        locations:
+          type: array
+          items:
+            type: object
+          default: []
+        categories:
+          type: array
+          items:
+            type: object
+          default: []
+        items:
+          type: array
+          items:
+            type: object
+          default: []
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Fulfillment:
+      type: object
+      description: A Beckn fulfillment — delivery/pickup/service execution path
+      required:
+        - order_id
+        - fulfillment_type
+      properties:
+        id:
+          type: string
+          format: uuid
+        order_id:
+          type: string
+        fulfillment_type:
+          type: string
+          description: E.g. home-delivery, pickup, digital
+        start:
+          type: object
+        end:
+          type: object
+        tracking:
+          type: boolean
+          default: false
+        tracking_id:
+          type: string
+        instructions:
+          type: object
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Bap:
+      type: object
+      description: A BAP (Buyer Application Platform)
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        did:
+          type: string
+          description: Decentralized Identifier for the BAP
+        endpoint:
+          type: string
+          format: uri
+          description: BAP network endpoint URL
+        public_key:
+          type: string
+          description: Public key for signing BAP requests
+        active:
+          type: boolean
+          default: true
+        capabilities:
+          type: array
+          items:
+            type: string
+          default: []
+          description: Supported capabilities: search, select, confirm, cancel, status, etc.
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Bpp:
+      type: object
+      description: A BPP (Buyer/Provider Application Platform)
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        did:
+          type: string
+        endpoint:
+          type: string
+          format: uri
+        public_key:
+          type: string
+        active:
+          type: boolean
+          default: true
+        capabilities:
+          type: array
+          items:
+            type: string
+          default: []
+        country:
+          type: string
+          description: ISO 3166-1 alpha-2 country code
+        city:
+          type: string
+          description: City or region code
+        symbol:
+          type: string
+          description: Currency symbol (e.g., $, €)
+        currency:
+          type: string
+          description: ISO 4217 currency code (e.g., USD, EUR)
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    Subscription:
+      type: object
+      description: A BeckN subscription
+      required:
+        - id
+        - subscriber_id
+        - subscriber_type
+      properties:
+        id:
+          type: string
+        subscriber_id:
+          type: string
+          description: ID of the subscriber (BAP/BPP)
+        subscriber_type:
+          type: string
+          enum: [bap, bpp]
+        plan_id:
+          type: string
+          description: Plan identifier (e.g., free, pro, enterprise)
+        status:
+          type: string
+          enum: [trialing, active, past_due, canceled, unpaid]
+          default: trialing
+        trial_ends_at:
+          type: string
+          format: date-time
+          nullable: true
+        current_period_start:
+          type: string
+          format: date-time
+          nullable: true
+        current_period_end:
+          type: string
+          format: date-time
+          nullable: true
+        cancel_at_period_end:
+          type: boolean
+          default: false
+        metadata:
+          type: object
+          additionalProperties: true
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ApiKey:
+      type: object
+      description: A BeckN API key
+      required:
+        - id
+        - owner
+      properties:
+        id:
+          type: string
+        description:
+          type: string
+        owner:
+          type: string
+          description: ID of the BAP/BPP that owns this key
+        scopes:
+          type: array
+          items:
+            type: string
+          default: []
+        active:
+          type: boolean
+          default: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        last_used_at:
+          type: string
+          format: date-time
+          nullable: true
+        metadata:
+          type: object
+          additionalProperties: true
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ApiKeyResponse:
+      type: object
+      description: Response containing the created API key secret
+      required:
+        - id
+        - secret
+      properties:
+        id:
+          type: string
+        secret:
+          type: string
+          description: The raw API key secret (only shown on creation)
+        description:
+          type: string
+        owner:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        inserted_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ApiKeyVerifyResponse:
+      type: object
+      required:
+        - valid
+      properties:
+        valid:
+          type: boolean
+        owner:
+          type: string
+          nullable: true
+        scopes:
+          type: array
+          items:
+            type: string
+          nullable: true
+        error:
+          type: string
+          nullable: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+    Pagination:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 20
+          maximum: 100
+        offset:
+          type: integer
+          default: 0
+
+    OrderCreateRequest:
+      type: object
+      required:
+        - id
+        - order_state
+        - provider_id
+        - bpp_id
+        - bap_id
+        - transaction_id
+      properties:
+        id:
+          type: string
+        order_state:
+          type: string
+        provider_id:
+          type: string
+        bpp_id:
+          type: string
+        bap_id:
+          type: string
+        transaction_id:
+          type: string
+        billing:
+          type: object
+        fulfillments:
+          type: array
+          items:
+            type: object
+        quote:
+          type: object
+        payment:
+          type: object
+        items:
+          type: array
+          items:
+            type: object
+        sync_topology:
+          type: boolean
+          default: true
+
+    OrderUpdateRequest:
+      type: object
+      properties:
+        order_state:
+          type: string
+        provider_id:
+          type: string
+        billing:
+          type: object
+        fulfillments:
+          type: array
+          items:
+            type: object
+        quote:
+          type: object
+        payment:
+          type: object
+
+    BapRegisterRequest:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        did:
+          type: string
+        endpoint:
+          type: string
+          format: uri
+        public_key:
+          type: string
+        active:
+          type: boolean
+        capabilities:
+          type: array
+          items:
+            type: string
+
+    BppRegisterRequest:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        did:
+          type: string
+        endpoint:
+          type: string
+          format: uri
+        public_key:
+          type: string
+        active:
+          type: boolean
+        capabilities:
+          type: array
+          items:
+            type: string
+        country:
+          type: string
+        city:
+          type: string
+        symbol:
+          type: string
+        currency:
+          type: string
+
+    SubscriptionCreateRequest:
+      type: object
+      required:
+        - id
+        - subscriber_id
+        - subscriber_type
+      properties:
+        id:
+          type: string
+        subscriber_id:
+          type: string
+        subscriber_type:
+          type: string
+          enum: [bap, bpp]
+        plan_id:
+          type: string
+        status:
+          type: string
+        trial_ends_at:
+          type: string
+          format: date-time
+        current_period_start:
+          type: string
+          format: date-time
+        current_period_end:
+          type: string
+          format: date-time
+        cancel_at_period_end:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+        activate:
+          type: boolean
+          default: false
+
+    ApiKeyCreateRequest:
+      type: object
+      required:
+        - owner
+      properties:
+        description:
+          type: string
+        owner:
+          type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        expires_at:
+          type: string
+          format: date-time
+        active:
+          type: boolean
+        metadata:
+          type: object
+          additionalProperties: true
+
+    ApiKeyVerifyRequest:
+      type: object
+      required:
+        - secret
+      properties:
+        secret:
+          type: string
+          description: The API key secret to verify
+
+    FulfillmentCreateRequest:
+      type: object
+      required:
+        - order_id
+        - fulfillment_type
+      properties:
+        order_id:
+          type: string
+        fulfillment_type:
+          type: string
+        start:
+          type: object
+        end:
+          type: object
+        tracking:
+          type: boolean
+        tracking_id:
+          type: string
+        instructions:
+          type: object
+
+    Company:
+      type: object
+      description: A B2B organization for multi-tenant BeckN network access
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        domain:
+          type: string
+        country:
+          type: string
+        active:
+          type: boolean
+          default: true
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    BapRegisterRequest:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        did:
+          type: string
+        endpoint:
+          type: string
+          format: uri
+        public_key:
+          type: string
+        active:
+          type: boolean
+          default: true
+        capabilities:
+          type: array
+          items:
+            type: string
+        country:
+          type: string
+        city:
+          type: string
+        region:
+          type: string
+        company_id:
+          type: string
+        lat:
+          type: number
+          format: float
+        lon:
+          type: number
+          format: float
+
+    GeoDnsResult:
+      type: object
+      required:
+        - hostname
+        - endpoints
+        - location
+      properties:
+        hostname:
+          type: string
+        endpoints:
+          type: array
+          items:
+            type: string
+        location:
+          $ref: '#/components/schemas/GeoLocation'
+        latency_ms:
+          type: integer
+
+    GeoLocation:
+      type: object
+      required:
+        - lat
+        - lng
+        - country
+      properties:
+        lat:
+          type: number
+          format: float
+        lng:
+          type: number
+          format: float
+        country:
+          type: string
+        region:
+          type: string
+        city:
+          type: string
+
+    GbpAccount:
+      type: object
+      required:
+        - id
+        - email
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+        account_name:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    A2AAgentCard:
+      type: object
+      required:
+        - agent_id
+        - name
+        - url
+      properties:
+        id:
+          type: string
+        agent_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        url:
+          type: string
+          format: uri
+        version:
+          type: string
+          default: "1.0.0"
+        capabilities:
+          type: object
+        skills:
+          type: array
+          items:
+            type: object
+        default_input_modes:
+          type: array
+          items:
+            type: string
+          default: ["text"]
+        default_output_modes:
+          type: array
+          items:
+            type: string
+          default: ["text"]
+        authentication:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    A2ATask:
+      type: object
+      required:
+        - task_id
+        - context_id
+      properties:
+        id:
+          type: string
+        task_id:
+          type: string
+        context_id:
+          type: string
+        status:
+          type: string
+          enum: [submitted, working, input_required, completed, failed, canceled, pending]
+        history:
+          type: array
+          items:
+            type: object
+        artifacts:
+          type: array
+          items:
+            type: object
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    A2ATaskMessage:
+      type: object
+      required:
+        - message_id
+        - role
+      properties:
+        id:
+          type: string
+        message_id:
+          type: string
+        context_id:
+          type: string
+        task_id:
+          type: string
+        role:
+          type: string
+          enum: [user, agent, system]
+        parts:
+          type: array
+          items:
+            type: object
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    A2AArtifact:
+      type: object
+      required:
+        - artifact_id
+      properties:
+        id:
+          type: string
+        artifact_id:
+          type: string
+        task_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        parts:
+          type: array
+          items:
+            type: object
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    McpTool:
+      type: object
+      required:
+        - id
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        input_schema:
+          type: object
+        annotations:
+          type: object
+        handler:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    McpPrompt:
+      type: object
+      required:
+        - name
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        arguments:
+          type: array
+          items:
+            type: object
+        template:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    McpResource:
+      type: object
+      required:
+        - uri_template
+      properties:
+        id:
+          type: string
+        uri_template:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        mime_type:
+          type: string
+        data:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    McpClient:
+      type: object
+      properties:
+        id:
+          type: string
+        client_info:
+          type: object
+        capabilities:
+          type: object
+        transport:
+          type: string
+          enum: [stdio, streamable_http]
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AcpIssuer:
+      type: object
+      required:
+        - issuer_id
+      properties:
+        id:
+          type: string
+        issuer_id:
+          type: string
+        name:
+          type: string
+        authorization_endpoint:
+          type: string
+          format: uri
+        token_endpoint:
+          type: string
+          format: uri
+        jwks_uri:
+          type: string
+          format: uri
+        revocation_endpoint:
+          type: string
+          format: uri
+        introspection_endpoint:
+          type: string
+          format: uri
+        userinfo_endpoint:
+          type: string
+          format: uri
+        scopes:
+          type: array
+          items:
+            type: string
+        claims:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AcpToken:
+      type: object
+      required:
+        - id
+        - token_value
+      properties:
+        id:
+          type: string
+        token_value:
+          type: string
+        token_type:
+          type: string
+          default: "Bearer"
+        scope:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        credential_issuer_id:
+          type: string
+        subject:
+          type: string
+        audience:
+          type: string
+        revoked:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AcpPresentation:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+        presentation_id:
+          type: string
+        vp:
+          type: object
+        credential_issuer_id:
+          type: string
+        holder:
+          type: string
+        verified:
+          type: boolean
+          default: false
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AcpAccessPolicy:
+      type: object
+      required:
+        - policy_id
+      properties:
+        id:
+          type: string
+        policy_id:
+          type: string
+        name:
+          type: string
+        resource:
+          type: string
+        scope:
+          type: string
+        credential_constraint:
+          type: string
+        actions:
+          type: array
+          items:
+            type: string
+        effect:
+          type: string
+          default: "Allow"
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AnpAnnouncement:
+      type: object
+      required:
+        - announcement_id
+        - did
+      properties:
+        id:
+          type: string
+        announcement_id:
+          type: string
+        did:
+          type: string
+        did_document_hash:
+          type: string
+        service_endpoint:
+          type: string
+          format: uri
+        timestamp:
+          type: string
+          format: date-time
+        ttl:
+          type: integer
+          default: 3600
+        proof:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AnpVerification:
+      type: object
+      required:
+        - did
+      properties:
+        id:
+          type: string
+        did:
+          type: string
+        did_document:
+          type: object
+        method:
+          type: string
+        valid:
+          type: boolean
+          default: false
+        verified_at:
+          type: string
+          format: date-time
+        signature:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AnpWitness:
+      type: object
+      required:
+        - witness_id
+      properties:
+        id:
+          type: string
+        witness_id:
+          type: string
+        did:
+          type: string
+        endpoint:
+          type: string
+          format: uri
+        protocols:
+          type: array
+          items:
+            type: string
+        announcements:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ErrorResponse:
+      type: object
+      required:
+        - error
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+            message:
+              type: string
+
+paths:
+  /api/orders:
+    post:
+      summary: Create a new order
+      operationId: createOrder
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreateRequest'
+      responses:
+        '200':
+          description: Order created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '400':
+          $ref: '#/components/schemas/ErrorResponse'
+    get:
+      summary: List orders
+      operationId: listOrders
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of orders
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Order'
+
+  /api/orders/{id}:
+    get:
+      summary: Get an order by ID
+      operationId: getOrder
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+        '404':
+          $ref: '#/components/schemas/ErrorResponse'
+    patch:
+      summary: Update an order
+      operationId: updateOrder
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderUpdateRequest'
+      responses:
+        '200':
+          description: Updated order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Order'
+    delete:
+      summary: Delete an order
+      operationId: deleteOrder
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Order deleted
+
+  /api/items:
+    post:
+      summary: Create a new item
+      operationId: createItem
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Item'
+      responses:
+        '200':
+          description: Item created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+    get:
+      summary: List items
+      operationId: listItems
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of items
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Item'
+
+  /api/items/{id}:
+    get:
+      summary: Get an item by ID
+      operationId: getItem
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The item
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Item'
+
+  /api/providers:
+    post:
+      summary: Create a new provider
+      operationId: createProvider
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Provider'
+      responses:
+        '200':
+          description: Provider created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Provider'
+    get:
+      summary: List providers
+      operationId: listProviders
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of providers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Provider'
+
+  /api/providers/{id}:
+    get:
+      summary: Get a provider by ID
+      operationId: getProvider
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The provider
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Provider'
+    delete:
+      summary: Delete a provider
+      operationId: deleteProvider
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Provider deleted
+
+  /api/fulfillments:
+    post:
+      summary: Create a new fulfillment
+      operationId: createFulfillment
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FulfillmentCreateRequest'
+      responses:
+        '200':
+          description: Fulfillment created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fulfillment'
+    get:
+      summary: List fulfillments
+      operationId: listFulfillments
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of fulfillments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Fulfillment'
+
+  /api/fulfillments/tracking/{trackingId}:
+    get:
+      summary: Track a fulfillment by tracking ID
+      operationId: trackFulfillment
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: trackingId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The fulfillment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Fulfillment'
+
+  /api/baps:
+    post:
+      summary: Register a new BAP
+      operationId: registerBap
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BapRegisterRequest'
+      responses:
+        '200':
+          description: BAP registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bap'
+    get:
+      summary: List BAPs
+      operationId: listBaps
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of BAPs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bap'
+
+  /api/baps/{id}:
+    get:
+      summary: Get a BAP by ID
+      operationId: getBap
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The BAP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bap'
+    patch:
+      summary: Update a BAP
+      operationId: updateBap
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bap'
+      responses:
+        '200':
+          description: Updated BAP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bap'
+
+  /api/bpps:
+    post:
+      summary: Register a new BPP
+      operationId: registerBpp
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BppRegisterRequest'
+      responses:
+        '200':
+          description: BPP registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bpp'
+    get:
+      summary: List BPPs
+      operationId: listBpps
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of BPPs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Bpp'
+
+  /api/bpps/{id}:
+    get:
+      summary: Get a BPP by ID
+      operationId: getBpp
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The BPP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bpp'
+    patch:
+      summary: Update a BPP
+      operationId: updateBpp
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Bpp'
+      responses:
+        '200':
+          description: Updated BPP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Bpp'
+
+  /api/subscriptions:
+    post:
+      summary: Create a new subscription
+      operationId: createSubscription
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubscriptionCreateRequest'
+      responses:
+        '200':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+    get:
+      summary: List subscriptions
+      operationId: listSubscriptions
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Subscription'
+
+  /api/subscriptions/{id}:
+    get:
+      summary: Get a subscription by ID
+      operationId: getSubscription
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /api/subscriptions/{id}/cancel:
+    post:
+      summary: Cancel a subscription
+      operationId: cancelSubscription
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Cancelled subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /api/subscriptions/{id}/renew:
+    post:
+      summary: Renew a subscription
+      operationId: renewSubscription
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Renewed subscription
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Subscription'
+
+  /api/api-keys:
+    post:
+      summary: Create a new API key
+      operationId: createApiKey
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKeyCreateRequest'
+      responses:
+        '200':
+          description: API key created (includes secret)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
+    get:
+      summary: List API keys
+      operationId: listApiKeys
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+      responses:
+        '200':
+          description: List of API keys
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ApiKey'
+
+  /api/api-keys/verify:
+    post:
+      summary: Verify an API key secret
+      operationId: verifyApiKey
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApiKeyVerifyRequest'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyVerifyResponse'
+
+  /api/api-keys/{id}/revoke:
+    post:
+      summary: Revoke an API key
+      operationId: revokeApiKey
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Revoked API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKey'
+
+  /api/api-keys/{id}/rotate:
+    post:
+      summary: Rotate an API key
+      operationId: rotateApiKey
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Rotated API key (includes new secret)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiKeyResponse'
+
+  /api/companies:
+    post:
+      summary: Create a new company
+      operationId: createCompany
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                domain:
+                  type: string
+                country:
+                  type: string
+      responses:
+        '200':
+          description: Company created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+    get:
+      summary: List companies
+      operationId: listCompanies
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - $ref: '#/components/parameters/limit'
+        - $ref: '#/components/parameters/offset'
+        - name: domain
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of companies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Company'
+
+  /api/companies/{id}:
+    get:
+      summary: Get a company by ID
+      operationId: getCompany
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: The company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+    patch:
+      summary: Update a company
+      operationId: updateCompany
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Company'
+      responses:
+        '200':
+          description: Updated company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Company'
+
+  /api/geodns/baps:
+    get:
+      summary: Discover BAPs via GeoDNS
+      operationId: discoverBaps
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: company_id
+          in: query
+          schema: { type: string }
+        - name: country
+          in: query
+          schema: { type: string }
+        - name: city
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Discovered BAPs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoDnsResult'
+
+  /api/geodns/bpps:
+    get:
+      summary: Discover BPPs via GeoDNS
+      operationId: discoverBpps
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: company_id
+          in: query
+          schema: { type: string }
+        - name: country
+          in: query
+          schema: { type: string }
+        - name: city
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Discovered BPPs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GeoDnsResult'
+
+  /api/geodns/bpps/nearby:
+    get:
+      summary: Find nearby BPPs by geographic coordinates
+      operationId: discoverMarketplace
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, format: float }
+        - name: lng
+          in: query
+          required: true
+          schema: { type: number, format: float }
+        - name: radius_km
+          in: query
+          schema: { type: number, default: 50 }
+        - name: limit
+          in: query
+          schema: { type: integer, default: 10 }
+      responses:
+        '200':
+          description: Nearby BPPs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GeoDnsResult'
+
+  /api/geodns/agents:
+    get:
+      summary: Discover A2A agents near a geographic location (cross-protocol)
+      operationId: discoverAgentsNearby
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: lat
+          in: query
+          required: true
+          schema: { type: number, format: float }
+        - name: lng
+          in: query
+          required: true
+          schema: { type: number, format: float }
+        - name: radius_km
+          in: query
+          schema: { type: number, default: 50 }
+      responses:
+        '200':
+          description: Discovered A2A agent cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/A2AAgentCard'
+
+  /api/gbp/accounts:
+    post:
+      summary: Create a GBP account for Google Business Profile sync
+      operationId: createGbpAccount
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                account_name:
+                  type: string
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: GBP account created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GbpAccount'
+    get:
+      summary: List GBP accounts
+      operationId: listGbpAccounts
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of GBP accounts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/GbpAccount'
+
+  /api/gbp/accounts/{id}/sync:
+    post:
+      summary: Sync GBP locations to BeckN BPPs
+      operationId: syncGbpLocations
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Sync result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  bpps:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Bpp'
+
+  /api/a2a/agent-cards:
+    post:
+      summary: Register an A2A agent card
+      operationId: registerAgentCard
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/A2AAgentCard'
+      responses:
+        '200':
+          description: Agent card registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2AAgentCard'
+    get:
+      summary: List A2A agent cards
+      operationId: listAgentCards
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of agent cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/A2AAgentCard'
+
+  /api/a2a/agent-cards/discover:
+    get:
+      summary: Discover agents by skill
+      operationId: discoverAgents
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: skill
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: Matching agent cards
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/A2AAgentCard'
+
+  /api/a2a/tasks:
+    post:
+      summary: Create an A2A task
+      operationId: createTask
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/A2ATask'
+      responses:
+        '200':
+          description: Task created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2ATask'
+    get:
+      summary: List A2A tasks
+      operationId: listTasks
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of tasks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/A2ATask'
+
+  /api/a2a/messages:
+    post:
+      summary: Send a message in an A2A task conversation
+      operationId: sendMessage
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/A2ATaskMessage'
+      responses:
+        '200':
+          description: Message sent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2ATaskMessage'
+    get:
+      summary: List A2A messages
+      operationId: listMessages
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of messages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/A2ATaskMessage'
+
+  /api/a2a/artifacts:
+    post:
+      summary: Create an A2A artifact
+      operationId: createArtifact
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/A2AArtifact'
+      responses:
+        '200':
+          description: Artifact created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/A2AArtifact'
+    get:
+      summary: List A2A artifacts
+      operationId: listArtifacts
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of artifacts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/A2AArtifact'
+
+  /api/mcp/tools:
+    post:
+      summary: Create an MCP tool
+      operationId: createTool
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpTool'
+      responses:
+        '200':
+          description: Tool created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpTool'
+    get:
+      summary: List MCP tools
+      operationId: listTools
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of tools
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/McpTool'
+
+  /api/mcp/prompts:
+    post:
+      summary: Create an MCP prompt
+      operationId: createPrompt
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpPrompt'
+      responses:
+        '200':
+          description: Prompt created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpPrompt'
+    get:
+      summary: List MCP prompts
+      operationId: listPrompts
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of prompts
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/McpPrompt'
+
+  /api/mcp/resources:
+    post:
+      summary: Create an MCP resource
+      operationId: createResource
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpResource'
+      responses:
+        '200':
+          description: Resource created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpResource'
+    get:
+      summary: List MCP resources
+      operationId: listResources
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of resources
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/McpResource'
+
+  /api/mcp/clients:
+    post:
+      summary: Register an MCP client
+      operationId: registerClient
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/McpClient'
+      responses:
+        '200':
+          description: Client registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/McpClient'
+    get:
+      summary: List MCP clients
+      operationId: listClients
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of clients
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/McpClient'
+
+  /api/acp/issuers:
+    post:
+      summary: Register an ACP credential issuer
+      operationId: registerIssuer
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcpIssuer'
+      responses:
+        '200':
+          description: Issuer registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcpIssuer'
+    get:
+      summary: List ACP credential issuers
+      operationId: listIssuers
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of issuers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AcpIssuer'
+
+  /api/acp/tokens:
+    post:
+      summary: Issue an ACP token
+      operationId: issueToken
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcpToken'
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcpToken'
+    get:
+      summary: List ACP tokens
+      operationId: listTokens
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of tokens
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AcpToken'
+
+  /api/acp/tokens/introspect:
+    post:
+      summary: Introspect an ACP token
+      operationId: introspectToken
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Token metadata
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcpToken'
+
+  /api/acp/presentations:
+    post:
+      summary: Submit a verifiable presentation
+      operationId: submitPresentation
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcpPresentation'
+      responses:
+        '200':
+          description: Presentation submitted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcpPresentation'
+    get:
+      summary: List ACP presentations
+      operationId: listPresentations
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of presentations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AcpPresentation'
+
+  /api/acp/policies:
+    post:
+      summary: Create an ACP access policy
+      operationId: createPolicy
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AcpAccessPolicy'
+      responses:
+        '200':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcpAccessPolicy'
+    get:
+      summary: List ACP access policies
+      operationId: listPolicies
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AcpAccessPolicy'
+
+  /api/anp/announcements:
+    post:
+      summary: Broadcast an ANP announcement
+      operationId: announce
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnpAnnouncement'
+      responses:
+        '200':
+          description: Announcement broadcast
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnpAnnouncement'
+    get:
+      summary: List ANP announcements
+      operationId: listAnnouncements
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnpAnnouncement'
+
+  /api/anp/verifications:
+    post:
+      summary: Verify a DID document
+      operationId: verify
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnpVerification'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnpVerification'
+    get:
+      summary: List ANP verifications
+      operationId: listVerifications
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of verifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnpVerification'
+
+  /api/anp/witnesses:
+    post:
+      summary: Register an ANP witness node
+      operationId: registerWitness
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AnpWitness'
+      responses:
+        '200':
+          description: Witness registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnpWitness'
+    get:
+      summary: List ANP witnesses
+      operationId: listWitnesses
+      security:
+        - ApiKeyAuth: []
+      responses:
+        '200':
+          description: List of witnesses
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AnpWitness'
+
+  /api/health:
+    get:
+      summary: Health check
+      operationId: health
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+
+components:
+  parameters:
+    limit:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 20
+        maximum: 100
+    offset:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0

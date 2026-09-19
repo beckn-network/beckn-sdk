@@ -1,0 +1,41 @@
+{
+  "name": "@beckn/sdk",
+  "version": "1.0.0",
+  "description": "BeckN Protocol SDK for TypeScript/JavaScript",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test dist/tests/*.test.js",
+    "prepublishOnly": "npm run build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "typescript": "^5.9.3"
+  },
+  "keywords": [
+    "beckn",
+    "protocol",
+    "sdk",
+    "commerce",
+    "interop"
+  ],
+  "license": "MIT",
+  "directories": {
+    "test": "tests"
+  },
+  "author": ""
+}
