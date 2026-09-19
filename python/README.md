@@ -1,6 +1,8 @@
 # BeckN Protocol SDK — Python
 
-Python SDK for the BeckN Protocol, implementing the Beckn protocol specification for domain-agnostic digital commerce.
+Python SDK for the BeckN Protocol — a unified agentic discovery and commerce protocol API.
+
+Supports: BeckN Core, GeoDNS, A2A (Agent-to-Agent), MCP (Model Context Protocol), ANP (Agent Network Protocol), ACP (Agent Credential Protocol), and GBP (Google Business Profile) sync.
 
 ## Installation
 
@@ -10,8 +12,6 @@ pip install beckn-sdk
 
 ## Quick Start
 
-### Initialize Client
-
 ```python
 from beckn import BeckNClient, BeckNClientConfig
 
@@ -20,164 +20,70 @@ client = BeckNClient(BeckNClientConfig(
     api_key="bk_your_api_key_here",
     timeout=30000,
 ))
-```
 
-### Register a BAP
+# Check health
+health = client.health_check()
 
-```python
-bap = client.create_bap(BapCreate(
-    id="my-bap-001",
-    name="My Store App",
-    endpoint="https://store.example.com",
-    country="US",
-    lat=40.7128,
-    lon=-74.0060,
-))
-```
-
-### Register a BPP
-
-```python
-bpp = client.create_bpp(BppCreate(
-    id="my-bpp-001",
-    name="My Provider App",
-    endpoint="https://provider.example.com",
-    country="US",
-    currency="USD",
-    lat=40.7128,
-    lon=-74.0060,
-))
-```
-
-### Create an Order
-
-```python
-order = client.create_order(OrderCreate(
-    id="order-001",
-    transaction_id="txn-001",
-    bap_id="my-bap-001",
-    bpp_id="my-bpp-001",
-))
-```
-
-### Discover Nearby BPPs (GeoDNS)
-
-```python
-# Find BPPs in a specific country
-bpps = client.discover_nearest_bap(country="US")
-
-# Find BPPs near a geographic location
-nearby = client.discover_marketplace(lat=40.7128, lng=-74.0060, radius_km=50, limit=10)
-```
-
-### GBP (Google Business Profile)
-
-```python
-# Register a GBP account
-account = client.create_gbp_account(GbpAccountCreate(
-    email="merchant@example.com",
-    account_name="accounts/1234567890",
-))
-
-# Sync GBP locations as BPPs (auto-registers A2A agent cards)
-synced = client.sync_gbp_locations(account.id)
-print(f"{len(synced['bpps'])} BPPs synced")
-```
-
-### A2A Agent Discovery
-
-```python
-# Discover agents near a location (cross-protocol with GeoDNS)
-nearby = client.discover_marketplace(lat=40.7128, lng=-74.0060, radius_km=50, limit=10)
-
-# Register an agent card
-agent = client.register_agent_card(AgentCardRegister(
-    agent_id="agent-001",
-    name="Travel Booking Agent",
-    url="https://travel.example.com",
-    capabilities={"streaming": True},
-    skills=[{"id": "search", "name": "Travel Search"}],
-))
-
-# Discover agents by skill
-results = client.discover_agents(skill="booking")
-```
-
-### ANP (Agent Network Protocol)
-
-```python
-# Announce a DID to the network
-announcement = client.announce(AnpAnnouncementCreate(
-    announcement_id="ann-001",
-    did="did:example:123",
-    service_endpoint="https://agent.example.com",
-))
-
-# Register a witness node
-witness = client.register_witness(AnpWitnessRegister(
-    witness_id="witness-001",
-    did="did:example:witness-1",
-    endpoint="https://witness.example.com",
-    protocols=["gossip", "http"],
-))
-
-# Verify a DID document
-verification = client.verify(AnpVerificationVerify(
-    did="did:example:123",
-    did_document={"id": "did:example:123"},
-    method="key",
-))
-```
-
-### ACP (Agent Communication Protocol)
-
-```python
-# Register a credential issuer
-issuer = client.register_issuer(AcpIssuerRegister(
-    issuer_id="issuer-001",
-    name="Test Issuer",
-    authorization_endpoint="https://issuer.example.com/authorize",
-    token_endpoint="https://issuer.example.com/token",
-    jwks_uri="https://issuer.example.com/.well-known/jwks.json",
-))
-
-# Issue a token
-token = client.issue_token(AcpTokenIssue(
-    token_value="eyJhbGciOiJSUzI1NiIs...",
-    subject="did:example:subject-1",
-))
-
-# Submit a verifiable presentation
-presentation = client.submit_presentation(AcpPresentationSubmit(
-    presentation_id="vp-123",
-    holder_did="did:example:holder-1",
-    issuer_id="issuer-001",
-    claims={"age": 25},
-))
-```
-
-### Google Business Profile Sync
-
-```python
-# Register a GBP account
-account = client.create_gbp_account({
-    "email": "merchant@example.com",
-    "account_name": "accounts/1234567890",
+# Create an order
+order = client.create_order({
+    "id": "order-001",
+    "transaction_id": "txn-001",
+    "bap_id": "my-bap-001",
+    "bpp_id": "my-bpp-001",
 })
 
-# Sync GBP locations as BPPs (auto-registers A2A agent cards)
-result = client.sync_gbp_locations(account["id"])
-print(f"{len(result['bpps'])} BPPs synced")
-```
-
-### A2A Agent Discovery
-
-```python
-# Discover nearby BPPs via GeoDNS (maps to A2A agents)
-bpps = client.discover_nearest_bpp(country="US")
+# Discover nearby BPPs
+nearby = client.discover_marketplace(lat=40.7128, lng=-74.0060, radius_km=50)
 
 # Register an agent card
-agent_card = client.register_agent_card({
+agent = client.register_agent_card({
+    "agent_id": "agent-001",
+    "name": "Travel Booking Agent",
+    "url": "https://travel.example.com",
+    "capabilities": {"streaming": True},
+})
+```
+
+## Protocol Support
+
+### BeckN Core
+```python
+# Orders
+order = client.create_order({"id": "order-001", "bap_id": "bap-001", "bpp_id": "bpp-001"})
+
+# BAPs (BeckN Application Platform)
+bap = client.create_bap({"id": "my-bap-001", "name": "My Store App", "country": "US"})
+
+# BPPs (BeckN Provider Platform)
+bpp = client.create_bpp({"id": "my-bpp-001", "name": "My Provider", "country": "US"})
+
+# Items
+item = client.create_item({"id": "item-001", "name": "Product", "price": 99})
+
+# Companies (B2B Multi-Tenant)
+company = client.create_company({"name": "Acme Corp", "domain": "acme.example.com"})
+
+# API Keys
+key = client.create_api_key({"name": "my-api-key"})
+
+# Subscriptions
+sub = client.create_subscription({"id": "sub-001", "type": "order"})
+```
+
+### GeoDNS Discovery
+```python
+# Find BAPs/BPPs by country
+baps = client.discover_nearest_bap(country="US")
+bpps = client.discover_nearest_bpp(country="US")
+
+# Find nearby by coordinates
+nearby = client.discover_marketplace(lat=40.7128, lng=-74.0060, radius_km=50, limit=10)
+```
+
+### A2A (Agent-to-Agent)
+```python
+# Register an agent card
+agent = client.register_agent_card({
     "agent_id": "agent-001",
     "name": "Travel Booking Agent",
     "url": "https://travel.example.com",
@@ -185,36 +91,72 @@ agent_card = client.register_agent_card({
     "skills": [{"id": "search", "name": "Travel Search"}],
 })
 
-# Send a message to a task
+# Create a task
+task = client.create_task({
+    "task_id": "task-123",
+    "context_id": "ctx-456",
+    "status": "pending",
+})
+
+# Send a message
 message = client.send_message({
     "message_id": "msg-001",
     "context_id": "ctx-1",
+    "task_id": "task-123",
     "role": "user",
-    "parts": [{"type": "text", "text": "Find flights to NYC"}],
+    "parts": [{"type": "text", "text": "Hello, agent!"}],
+})
+```
+
+### MCP (Model Context Protocol)
+```python
+# Register a tool
+tool = client.create_tool({
+    "id": "tool-1",
+    "name": "search",
+    "input_schema": {"type": "object"},
+    "handler": "MyApp.Tools.Search",
+})
+
+# Create a resource
+resource = client.create_resource({
+    "uri_template": "file:///data/{id}",
+    "name": "data-file",
+    "mime_type": "application/json",
+})
+
+# Register a client
+client_obj = client.register_client({
+    "client_info": {"name": "my-app", "version": "1.0.0"},
+    "capabilities": {"tools": True},
 })
 ```
 
 ### ANP (Agent Network Protocol)
-
 ```python
-# Announce a DID to the network
+# Announce a DID
 announcement = client.announce({
     "announcement_id": "ann-001",
     "did": "did:example:123",
     "service_endpoint": "https://agent.example.com",
 })
 
-# Register a witness node
+# Register a witness
 witness = client.register_witness({
     "witness_id": "witness-001",
     "did": "did:example:witness-1",
     "endpoint": "https://witness.example.com",
-    "protocols": ["gossip", "http"],
+})
+
+# Verify a DID document
+verification = client.verify({
+    "did": "did:example:123",
+    "did_document": {"id": "did:example:123"},
+    "method": "key",
 })
 ```
 
-### ACP (Agent Communication Protocol)
-
+### ACP (Agent Credential Protocol)
 ```python
 # Register a credential issuer
 issuer = client.register_issuer({
@@ -228,17 +170,29 @@ issuer = client.register_issuer({
 # Issue a token
 token = client.issue_token({
     "token_value": "eyJhbGciOiJSUzI1NiIs...",
+    "scope": "openid profile offline_access",
     "subject": "did:example:subject-1",
 })
 
 # Submit a verifiable presentation
 presentation = client.submit_presentation({
-    "id": "pres-001",
     "presentation_id": "vp-123",
-    "vp": {"@context": ["..."], "type": "VerifiablePresentation"},
-    "credential_issuer_id": "issuer-001",
     "holder": "did:example:holder-1",
+    "credential_issuer_id": "issuer-001",
 })
+```
+
+### GBP Sync
+```python
+# Register a GBP account
+account = client.create_gbp_account({
+    "email": "merchant@example.com",
+    "account_name": "accounts/1234567890",
+})
+
+# Sync GBP locations (auto-registers A2A agent cards)
+result = client.sync_gbp_locations(account["id"])
+print(f"{result['bpps_synced']} BPPs synced")
 ```
 
 ## API Reference
@@ -247,100 +201,114 @@ presentation = client.submit_presentation({
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `base_url` | `str` | `'http://localhost:4000/v1'` | API base URL |
+| `base_url` | `str` | `'https://api.beckn.network/v1'` | API base URL |
 | `api_key` | `Optional[str]` | `None` | API key for authentication |
 | `timeout` | `int` | `30000` | Request timeout in milliseconds |
 
-### Methods
+### Core Methods
 
-#### Orders
-- `list_orders() -> list[Order]`
-- `create_order(data: OrderCreate) -> Order`
-- `get_order(id: str) -> Order`
-- `delete_order(id: str) -> None`
+| Method | Description |
+|--------|-------------|
+| `health_check()` | Check API health |
+| `list_orders()` | List all orders |
+| `create_order(data)` | Create a new order |
+| `get_order(id)` | Get order by ID |
+| `list_baps()` | List BAPs |
+| `create_bap(data)` | Register a BAP |
+| `list_bpps()` | List BPPs |
+| `create_bpp(data)` | Register a BPP |
+| `list_items()` | List items |
+| `create_item(data)` | Create an item |
+| `list_providers()` | List providers |
+| `create_provider(data)` | Register a provider |
+| `list_api_keys()` | List API keys |
+| `create_api_key(data)` | Create API key |
+| `revoke_api_key(id)` | Revoke API key |
+| `list_companies()` | List companies |
+| `create_company(data)` | Create company |
 
-#### BAPs
-- `list_baps() -> list[Bap]`
-- `list_baps_by_company(company_id: str) -> list[Bap]`
-- `list_baps_by_country(country: str) -> list[Bap]`
-- `list_baps_nearby(lat: float, lng: float, radius_km: int = 50) -> list[Bap]`
-- `create_bap(data: BapCreate) -> Bap`
-- `get_bap(bap_id: str) -> Bap`
-- `update_bap(bap_id: str, data: BapUpdate) -> Bap`
+### GeoDNS Methods
 
-#### BPPs
-- `list_bpps() -> list[Bpp]`
-- `list_bpps_by_company(company_id: str) -> list[Bpp]`
-- `list_bpps_by_country(country: str) -> list[Bpp]`
-- `list_bpps_nearby(lat: float, lng: float, radius_km: int = 50) -> list[Bpp]`
-- `create_bpp(data: BppCreate) -> Bpp`
-- `get_bpp(bpp_id: str) -> Bpp`
-- `update_bpp(bpp_id: str, data: BppUpdate) -> Bpp`
+| Method | Description |
+|--------|-------------|
+| `discover_nearest_bap(country?, city?)` | Find BAPs by country/city |
+| `discover_nearest_bpp(country?, city?)` | Find BPPs by country/city |
+| `discover_marketplace(lat, lng, radius_km, limit)` | Find nearby providers |
 
-#### Companies (B2B Multi-Tenant)
-- `list_companies() -> list[Company]`
-- `create_company(data: CompanyCreate) -> Company`
-- `get_company(company_id: str) -> Company`
-- `list_companies_by_domain(domain: str) -> list[Company]`
+### A2A Methods
 
-#### API Keys
-- `list_api_keys() -> list[ApiKey]`
-- `create_api_key(data: ApiKeyCreate) -> ApiKeyResponse`
-- `verify_api_key(secret: str) -> ApiKeyVerifyResponse`
-- `revoke_api_key(key_id: str) -> ApiKey`
-- `rotate_api_key(key_id: str) -> ApiKeyResponse`
+| Method | Description |
+|--------|-------------|
+| `list_agent_cards()` | List agent cards |
+| `register_agent_card(data)` | Register an agent card |
+| `discover_agents(skill)` | Find agents by skill |
+| `list_tasks()` | List tasks |
+| `create_task(data)` | Create a task |
+| `list_messages()` | List messages |
+| `send_message(data)` | Send a message |
+| `list_artifacts()` | List artifacts |
+| `create_artifact(data)` | Create an artifact |
 
-#### GeoDNS Discovery
-- `discover_nearest_bap(country: str = None, city: str = None) -> GeoDnsResult`
-- `discover_nearest_bpp(country: str = None, city: str = None) -> GeoDnsResult`
-- `discover_marketplace(lat: float, lng: float, radius_km: int = 50, limit: int = 10) -> list[GeoDnsResult]`
+### MCP Methods
 
-#### GBP (Google Business Profile)
-- `list_gbp_accounts() -> list[GbpAccount]`
-- `create_gbp_account(data: dict) -> GbpAccount`
-- `sync_gbp_locations(account_id: str) -> dict`
+| Method | Description |
+|--------|-------------|
+| `list_tools()` | List MCP tools |
+| `create_tool(data)` | Create a tool |
+| `list_resources()` | List resources |
+| `create_resource(data)` | Create a resource |
+| `list_prompts()` | List prompts |
+| `create_prompt(data)` | Create a prompt |
+| `list_clients()` | List MCP clients |
+| `register_client(data)` | Register a client |
 
-#### A2A (Agent-to-Agent)
-- `list_agent_cards() -> list[AgentCard]`
-- `register_agent_card(data: AgentCardRegister) -> AgentCard`
-- `list_tasks() -> list[A2ATask]`
-- `create_task(data: A2ATaskCreate) -> A2ATask`
-- `send_message(data: A2ATaskMessageSend) -> A2ATaskMessage`
-- `list_messages() -> list[A2ATaskMessage]`
-- `list_artifacts() -> list[A2AArtifact]`
-- `create_artifact(data: A2AArtifactCreate) -> A2AArtifact`
+### ANP Methods
 
-#### MCP (Model Context Protocol)
-- `list_tools() -> list[McpTool]`
-- `create_tool(data: McpToolCreate) -> McpTool`
-- `list_resources() -> list[McpResource]`
-- `create_resource(data: McpResourceCreate) -> McpResource`
-- `list_prompts() -> list[McpPrompt]`
-- `create_prompt(data: McpPromptCreate) -> McpPrompt`
+| Method | Description |
+|--------|-------------|
+| `list_announcements()` | List announcements |
+| `announce(data)` | Announce a DID |
+| `list_witnesses()` | List witnesses |
+| `register_witness(data)` | Register a witness |
+| `verify(data)` | Verify a DID document |
 
-#### ACP (Agent Communication Protocol)
-- `list_issuers() -> list[AcpIssuer]`
-- `register_issuer(data: AcpIssuerRegister) -> AcpIssuer`
-- `list_tokens() -> list[AcpToken]`
-- `issue_token(data: AcpTokenIssue) -> AcpToken`
-- `introspect_token(token: str) -> AcpToken`
-- `list_presentations() -> list[AcpPresentation]`
-- `submit_presentation(data: AcpPresentationSubmit) -> AcpPresentation`
-- `list_policies() -> list[AcpAccessPolicy]`
-- `create_policy(data: AcpAccessPolicyCreate) -> AcpAccessPolicy`
+### ACP Methods
 
-#### ANP (Agent Network Protocol)
-- `list_announcements() -> list[AnpAnnouncement]`
-- `announce(data: AnpAnnouncementCreate) -> AnpAnnouncement`
-- `list_witnesses() -> list[AnpWitness]`
-- `register_witness(data: AnpWitnessRegister) -> AnpWitness`
-- `verify(data: AnpVerificationVerify) -> AnpVerification`
+| Method | Description |
+|--------|-------------|
+| `list_issuers()` | List credential issuers |
+| `register_issuer(data)` | Register an issuer |
+| `list_tokens()` | List tokens |
+| `issue_token(data)` | Issue a token |
+| `introspect_token(token)` | Introspect a token |
+| `list_presentations()` | List presentations |
+| `submit_presentation(data)` | Submit a presentation |
+| `list_policies()` | List access policies |
+| `create_policy(data)` | Create an access policy |
 
-#### Subscriptions
-- `list_subscriptions() -> list[Subscription]`
-- `create_subscription(data: SubscriptionCreate) -> Subscription`
-- `cancel_subscription(sub_id: str) -> Subscription`
-- `renew_subscription(sub_id: str) -> Subscription`
+### GBP Methods
+
+| Method | Description |
+|--------|-------------|
+| `list_gbp_accounts()` | List GBP accounts |
+| `create_gbp_account(data)` | Register a GBP account |
+| `sync_gbp_locations(account_id)` | Sync locations (creates BPPs + A2A agents) |
+
+## Development
+
+```bash
+# Install with dev dependencies
+pip install -e ".[dev]"
+
+# Run tests
+pytest tests/ -v
+
+# Type check
+mypy beckn/
+
+# Lint
+ruff check beckn/
+```
 
 ## License
 
